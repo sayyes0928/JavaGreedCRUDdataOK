@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class UserDAO {
@@ -29,7 +30,7 @@ public class UserDAO {
 			e.printStackTrace();
 			System.out.println("드라이버 로딩 실패");
 		}
-	}
+	}//
 
 	public void connect() { // DB와 연결하는 메소드
 		try {
@@ -99,14 +100,14 @@ public class UserDAO {
 		}
 	}
 
-	void update(String name, String number, String age, String phone) {
+	public void update(String name, String number, String age, String phone) {
 		connect();
 		try {
-//			String sql2;
-////			sql2 = "update user set " + list[input.updateNum] + " = '" + input.change + "' where user_id= '"
-////					+ userDTO.getId() + "'";
-//			pstmt = conn.prepareStatement(sql2);
-//			pstmt.executeUpdate(); // database 에 valuse 를 update! //
+			String sql2;
+			sql2 = "UPDATE userDB SET name='" + name + "',age ='" + age + "' ,phone='" + phone + "' WHERE number = '"
+					+ number + "'";
+			pstmt = conn.prepareStatement(sql2);
+			pstmt.executeUpdate(); // database 에 valuse 를 update! //
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -136,5 +137,49 @@ public class UserDAO {
 		} finally {
 			disconnect();
 		}
+	}
+
+	public ArrayList<UserDTO> showArray() {
+		connect();
+		ArrayList<UserDTO> userlist = new ArrayList<>();
+		try {
+			stmt = conn.createStatement();
+			String sql;
+			sql = "select * from userDB"; // 내가 입력해준id 테이블값의 전체의
+			ResultSet rs = stmt.executeQuery(sql); // 값을저장해준 모든정보를 결과 객체 rs에 담음
+
+			while (rs.next()) {
+				UserDTO user = new UserDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4));
+				userlist.add(user);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("호출실패");
+		} finally {
+			disconnect();
+		}
+
+		return userlist;
+
+	}
+	public int idCheck(String idcheck) { // InputData 클래스에서 회원가입시 ID중복확인을 위해 호출되어 사용함
+		connect();
+		int result = 0;
+		try {
+			stmt = conn.createStatement();
+			String sqlIdcheck;
+			sqlIdcheck = "select number from userDB where number = '" + idcheck + "'"; // user_id 필드에 중복
+																										// 값이 있는지 확인
+			ResultSet rs = stmt.executeQuery(sqlIdcheck); //
+			if (rs.next()) {
+				if (idcheck.equals(rs.getString(1))) {
+					result = -1; // 중복값이 있을 때 -1을 반환값에 담아 오류가 있음을 알려준다
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+		}
+		return result;
 	}
 }

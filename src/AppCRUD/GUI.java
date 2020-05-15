@@ -5,14 +5,20 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 
 import user.UserDAO;
+import user.UserDTO;
 
 public class GUI extends JFrame { // jframe 상속
 
@@ -20,32 +26,33 @@ public class GUI extends JFrame { // jframe 상속
 
 	// *** 각각의 패널의 초기 Visible은 false 로 설정해 화면이 겹치지 않게 한다.
 	UserDAO userDAO = new UserDAO();
+	JTable table;
 
 	GUI() {
 		// 프레임 셋팅
 		setTitle("부서 정보 관리 프로그램");
-		setSize(600, 400);
+		setSize(700, 500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setVisible(true);
-		getContentPane();
-		//
+		// d
 
+		JPanel login = new JPanel();
 		JPanel Mainbtn = new JPanel(new GridLayout(4, 1));
-//		JPanel nullN = new JPanel();
-//		JPanel nullS = new JPanel();
 
 		JPanel insertJP = new JPanel(new BorderLayout()); // insert 번튼 클릭시 출력
+		insertJP.setBounds(140, 0, 500, 390);
 		insertJP.setVisible(false);
 		insertJP.setBackground(Color.WHITE);
-		getContentPane().add(insertJP);
 
 		JPanel searchJP = new JPanel(new BorderLayout()); // select 버튼 클릭시 출력
+		searchJP.setBounds(140, 0, 500, 390);
 		searchJP.setVisible(false);
 		searchJP.setBackground(Color.WHITE);
-//		getContentPane().add(searchJP);
 
-		JPanel showJP = new JPanel(); // show 버튼 클릭시 출력
+		JPanel showJP = new JPanel(new BorderLayout()); // show 버튼 클릭시 출력
+		showJP.setSize(300, 300);
 		showJP.setVisible(false);
+		showJP.setBackground(Color.WHITE);
 
 		// 메인에 버튼 배치
 		JButton userIN = new JButton("부서정보 입력"); // 버튼 클릭시 insertJP 출력
@@ -53,10 +60,10 @@ public class GUI extends JFrame { // jframe 상속
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				System.out.println("입력확인");
 				insertJP.setVisible(true);
 				searchJP.setVisible(false);
 				showJP.setVisible(false);
+
 			}
 		});
 
@@ -71,21 +78,44 @@ public class GUI extends JFrame { // jframe 상속
 			}
 		});
 		JButton userShow = new JButton("부서정보 전체조회");
+		userShow.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				searchJP.setVisible(false);
+				insertJP.setVisible(false);
+				showJP.setVisible(true);
+
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				model.setRowCount(0);
+				showUser();
+
+			}
+//				
+		});
+
 		JButton userExit = new JButton("프로그램 종료");
+		userExit.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.exit(0);
+			}
+		});
 
 		Mainbtn.add(userIN);
 		Mainbtn.add(userSelect);
 		Mainbtn.add(userShow);
 		Mainbtn.add(userExit);
 
-		getContentPane().add(Mainbtn, BorderLayout.WEST);
+		add(Mainbtn, BorderLayout.WEST);
 
 		// ****** 초기화면 설정 *******
 		// ****** 버튼별 기능설정 ******
 
 		// INSERT 기능 구현 *****
-		
-		getContentPane().add(insertJP,BorderLayout.CENTER);
+
+		add(insertJP, BorderLayout.CENTER);
 		JPanel insertLa = new JPanel(new GridLayout(5, 1));
 
 		JLabel name = new JLabel("직원명 : ");
@@ -99,11 +129,14 @@ public class GUI extends JFrame { // jframe 상속
 		insertLa.add(phone);
 
 		JPanel insertTxtJP = new JPanel(new GridLayout(5, 1));
-
-		JTextField nameTxt = new JTextField();
-		JTextField numberTxt = new JTextField();
-		JTextField ageTxt = new JTextField();
-		JTextField phoneTxt = new JTextField();
+		JTextField nameTxt;
+		nameTxt = new JTextField(null);
+		JTextField numberTxt;
+		numberTxt = new JTextField(null);
+		JTextField ageTxt;
+		ageTxt = new JTextField(null);
+		JTextField phoneTxt;
+		phoneTxt = new JTextField(null);
 
 		JPanel submitJP = new JPanel(new BorderLayout());
 		JButton submitbtn = new JButton("전송"); // 입력받은 정보를 DB로 전송 할 버튼
@@ -122,15 +155,34 @@ public class GUI extends JFrame { // jframe 상속
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String name = nameTxt.getText();
-				String number = numberTxt.getText();
-				String age = ageTxt.getText();
-				String phone = phoneTxt.getText();
+				String name = null;
+				String number = null;
+				String age = null;
+				String phone = null;
 
-				userDAO.insert(name, number, age, phone);
+				name = nameTxt.getText();
+				number = numberTxt.getText();
+				age = ageTxt.getText();
+				phone = phoneTxt.getText();
+				if (name.trim().length() == 0 || number.trim().length() == 0 || age.trim().length() == 0
+						|| phone.trim().length() == 0) {
+					JOptionPane.showMessageDialog(null, "입력이 안된 내용이 있습니다.");
+				} else {
+					int idcheck = userDAO.idCheck(number);
+					if (idcheck == 0) {
+						userDAO.insert(name, number, age, phone);
+						JOptionPane.showMessageDialog(null, "입력하신 정보가 성공적으로 저장되었습니다.");
+						nameTxt.setText("");
+						numberTxt.setText("");
+						ageTxt.setText("");
+						phoneTxt.setText("");
+					} else {
+						JOptionPane.showMessageDialog(null, "중복되는 직원번호가 존재합니다");
+					}
+
+				}
 			}
 		});
-//		Main.add(insertJP);
 
 		// SELECT 기능 구현 *****
 
@@ -154,17 +206,23 @@ public class GUI extends JFrame { // jframe 상속
 		JTextField phoneCallTxt = new JTextField();
 
 		JPanel functionJP = new JPanel(new BorderLayout());
-		JTextField searchTxt = new JTextField("입력"); // 검색텍스트 입력
+		JTextField searchTxt = new JTextField("직원번호 입력"); // 검색텍스트 입력
 		JButton searchbtn = new JButton("검색");
 		searchbtn.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				userDAO.search(searchTxt.getText());
-				nameCallTxt.setText(userDAO.userDTO.getName());
-				numberCallTxt.setText(userDAO.userDTO.getNumber());
-				ageCallTxt.setText(userDAO.userDTO.getAge());
-				phoneCallTxt.setText(userDAO.userDTO.getPhone());
+				int idcheck = userDAO.idCheck(searchTxt.getText());
+				if (idcheck != 0) {
+					userDAO.search(searchTxt.getText());
+					nameCallTxt.setText(userDAO.userDTO.getName());
+					numberCallTxt.setText(userDAO.userDTO.getNumber());
+					ageCallTxt.setText(userDAO.userDTO.getAge());
+					phoneCallTxt.setText(userDAO.userDTO.getPhone());
+				} else {
+					JOptionPane.showMessageDialog(null, "입력하신 정보가 없습니다.");
+				}
+
 			}
 		});
 
@@ -173,8 +231,20 @@ public class GUI extends JFrame { // jframe 상속
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-
+				if (!numberCallTxt.getText().equals(userDAO.userDTO.getNumber())) {
+					JOptionPane.showMessageDialog(null, "직원번호는 변경 할 수 없습니다.");
+				} else {
+					userDAO.update(nameCallTxt.getText(), numberCallTxt.getText(), ageCallTxt.getText(),
+							phoneCallTxt.getText());
+					JOptionPane.showMessageDialog(null, "정보가 성공적으로 수정되었습니다.");
+					nameCallTxt.setText("");
+					numberCallTxt.setText("");
+					ageCallTxt.setText("");
+					phoneCallTxt.setText("");
+					searchTxt.setText("");
+				}
 			}
+
 		});
 		JButton deletebtn = new JButton("삭제"); //
 		deletebtn.addActionListener(new ActionListener() {
@@ -198,11 +268,39 @@ public class GUI extends JFrame { // jframe 상속
 		searchTxtJP.add(numberCallTxt);
 		searchTxtJP.add(ageCallTxt);
 		searchTxtJP.add(phoneCallTxt);
+		searchTxtJP.add(functionJP);
 
 		searchJP.add(searchLa, BorderLayout.WEST);
 		searchJP.add(searchTxtJP, BorderLayout.CENTER);
-		searchJP.add(functionJP, BorderLayout.SOUTH);
 
-//		getContentPane().add(searchJP,BorderLayout.CENTER);
+		add(searchJP, BorderLayout.CENTER);
+
+		// SHOW 기능 구현 ****
+
+		table = new JTable();
+		table.setVisible(true);
+		table.setModel(new DefaultTableModel(new Object[][] {
+
+		}, new String[] { "이름", "직원번호", "나이", "전화번호" }));
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		table.setModel(model);
+		showJP.add(new JScrollPane(table), BorderLayout.CENTER);
+		add(showJP, BorderLayout.CENTER);
 	}
+
+	public void showUser() {
+
+		ArrayList<UserDTO> list = userDAO.showArray();
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		Object[] row = new Object[4];
+		for (int i = 0; i < list.size(); i++) {
+			row[0] = list.get(i).getName();
+			row[1] = list.get(i).getNumber();
+			row[2] = list.get(i).getAge();
+			row[3] = list.get(i).getPhone();
+
+			model.addRow(row);
+		}
+	}
+
 }
